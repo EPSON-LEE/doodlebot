@@ -40,6 +40,16 @@ export const agent = new Agent({
 });
 
 let hasStreamed = false;
+let thinkingInterval: NodeJS.Timeout | null = null;
+
+function stopThinkingAnimation() {
+  if (thinkingInterval) {
+    clearInterval(thinkingInterval);
+    thinkingInterval = null;
+    // 清除“正在思考”这行
+    process.stdout.write(" ".repeat(30) + "\r");
+  }
+}
 
 // 2. 核心事件引擎
 export function setupAgentSubscriptions() {
@@ -51,7 +61,13 @@ export function setupAgentSubscriptions() {
 
       case "message_start":
         if (event.message.role === "assistant") {
-          process.stdout.write(`${Colors.dim}AI 正在思考...\r`);
+          let dots = 0;
+          stopThinkingAnimation(); // 确保安全
+          thinkingInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            const bar = `${Colors.gray}${"●".repeat(dots)}${"○".repeat(3 - dots)}${Colors.reset}`;
+            process.stdout.write(`  ${Colors.gray}${bar} thinking${Colors.reset}   \r`);
+          }, 400);
         }
         break;
 
@@ -59,7 +75,7 @@ export function setupAgentSubscriptions() {
         if (event.assistantMessageEvent.type === "text_delta") {
           if (event.assistantMessageEvent.delta) {
             if (!hasStreamed) {
-              process.stdout.write(" ".repeat(20) + "\r");
+              stopThinkingAnimation();
             }
             hasStreamed = true;
             logger.agent(event.assistantMessageEvent.delta);
@@ -68,6 +84,7 @@ export function setupAgentSubscriptions() {
         break;
         
       case "tool_execution_start":
+        stopThinkingAnimation();
         hasStreamed = true;
         logger.tool(event.toolName, event.args);
         break;
@@ -77,6 +94,7 @@ export function setupAgentSubscriptions() {
         break;
         
       case "turn_end":
+        stopThinkingAnimation();
         if (event.message.role === "assistant" && !hasStreamed) {
           const fullContent = event.message.content;
           let text = "";

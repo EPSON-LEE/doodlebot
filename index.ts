@@ -20,44 +20,86 @@ async function runCli() {
     prompt: `\n${Colors.yellow}${Colors.bright}你> ${Colors.reset}`
   });
 
-  // 1. 加载历史记忆
-  const history = memoryManager.load();
-  if (history.length > 0) {
-    agent.replaceMessages(history);
-    logger.info(`已从记忆中恢复 ${history.length} 条消息。`);
+  // 允许捕获按键 (用于 ESC 取消)
+  readline.emitKeypressEvents(process.stdin);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
   }
 
-  logger.info("=== 通用 Agent AI  ===");
-  logger.info("输入指令（输入 'clear' 清空记忆，'exit' 退出）");
+  let isAgentRunning = false;
 
-    rl.prompt();
+  // 监听按键
+  process.stdin.on("keypress", (str, key) => {
+    // 处理 Ctrl+C 退出
+    if (key.ctrl && key.name === "c") {
+      process.exit();
+    }
+    
+    // 处理 ESC 取消
+    if (key.name === "escape" && isAgentRunning) {
+      logger.info("\n[操作取消]: 正在中断当前任务...");
+      agent.abort();
+    }
+  });
 
-    rl.on("line", async (line) => {
+  // 1. 加载历史记忆
+  const history = memoryManager.load();
+
+  // 启动界面
+  const line = `${Colors.gray}${"─".repeat(48)}${Colors.reset}`;
+  console.log();
+  console.log(line);
+  console.log(`  ${Colors.cyan}${Colors.bright}  DoodleBot  ${Colors.reset}${Colors.gray} - General Agent AI${Colors.reset}`);
+  console.log(line);
+  console.log(`  ${Colors.gray}Model   ${Colors.reset}${Colors.white}${ARK_CONFIG.model}${Colors.reset}`);
+
+  if (history.length > 0) {
+    agent.replaceMessages(history);
+    console.log(`  ${Colors.gray}Memory  ${Colors.reset}${Colors.green}${history.length} messages restored${Colors.reset}`);
+  } else {
+    console.log(`  ${Colors.gray}Memory  ${Colors.reset}${Colors.dim}empty${Colors.reset}`);
+  }
+
+  console.log(`  ${Colors.gray}Hotkey  ${Colors.reset}${Colors.yellow}ESC${Colors.reset} cancel  ${Colors.dim}|${Colors.reset}  ${Colors.yellow}clear${Colors.reset} reset  ${Colors.dim}|${Colors.reset}  ${Colors.yellow}exit${Colors.reset} quit`);
+  console.log(line);
+
+  rl.prompt();
+
+  rl.on("line", async (line) => {
     const input = line.trim();
     
     if (input.toLowerCase() === "clear") {
       memoryManager.clear();
       agent.replaceMessages([]);
+      console.log(`  ${Colors.gray}Memory cleared.${Colors.reset}`);
       rl.prompt();
       return;
     }
 
     if (["exit", "quit", "退出"].includes(input.toLowerCase())) {
-      console.log("挥挥手，不带走一片云彩～");
+      console.log(`\n  ${Colors.gray}Goodbye.${Colors.reset}\n`);
       process.exit(0);
     }
 
     if (input) {
-      // 临时挂起提示符，避免流式输出乱序
       rl.pause(); 
+      isAgentRunning = true;
       try {
         await agent.prompt(input);
       } catch (err: any) {
-        logger.error(`系统发生异常: ${err.message}`);
+        if (err.message.includes("abort") || err.name === "AbortError") {
+          logger.info("[任务已停止]");
+        } else {
+          logger.error(`系统发生异常: ${err.message}`);
+        }
+      } finally {
+        isAgentRunning = false;
+        rl.resume();
+        rl.prompt();
       }
-      rl.resume();
+    } else {
+      rl.prompt();
     }
-    rl.prompt();
   });
 }
 

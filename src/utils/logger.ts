@@ -7,10 +7,16 @@ const LLM_LOG_PATH = path.join(LOG_DIR, "llm.log");
 
 export const logger = {
   info: (msg: string) => console.log(`${Colors.cyan}${msg}${Colors.reset}`),
-  tool: (name: string, args: any) => console.log(`\n${Colors.magenta}[执行工具: ${name}]${Colors.reset} 参数: ${JSON.stringify(args)}`),
-  result: (name: string, res: any) => console.log(`${Colors.green}[工具结果: ${name}]${Colors.reset}`),
-  error: (msg: string) => console.error(`${Colors.red}[错误] ${msg}${Colors.reset}`),
-  agent: (msg: string) => process.stdout.write(`${Colors.blue}${msg}${Colors.reset}`),
+  tool: (name: string, args: any) => {
+    const argsStr = JSON.stringify(args, null, 0);
+    const shortArgs = argsStr.length > 80 ? argsStr.substring(0, 80) + "..." : argsStr;
+    console.log(`\n${Colors.gray}  ┌─ ${Colors.magenta}${Colors.bright}${name}${Colors.reset}${Colors.gray}  ${shortArgs}${Colors.reset}`);
+  },
+  result: (name: string, res: any) => {
+    console.log(`${Colors.gray}  └─ ${Colors.green}done${Colors.reset}`);
+  },
+  error: (msg: string) => console.error(`${Colors.red}${Colors.bright}  [!] ${msg}${Colors.reset}`),
+  agent: (msg: string) => process.stdout.write(`${Colors.white}${msg}${Colors.reset}`),
   llmCall: (messages: any[]) => {
     if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
 
