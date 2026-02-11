@@ -5,11 +5,18 @@ import { agentTools } from "./tools/index.js";
 import { Colors } from "./constants/colors.js";
 import { logger } from "./utils/logger.js";
 import { memoryManager } from "./utils/memory.js";
+import { skillManager } from "./utils/skillManager.js";
+
+// 获取初始化时的技能列表
+const availableSkills = skillManager.discoverSkills();
+const skillContext = availableSkills.length > 0 
+  ? `\n你可以使用以下技能（Skills），如果需要详细的操作流程，请调用 read_skill 工具：\n${availableSkills.map(s => `- ${s.name}: ${s.description}`).join('\n')}`
+  : "";
 
 // 1. 初始化 Agent
 export const agent = new Agent({
   initialState: {
-    systemPrompt: "你是一个具备本机操作能力的智能助理。你可以通过终端命令和文件管理工具来了解环境并执行任务。始终保持回复简洁、专业。",
+    systemPrompt: `你是一个具备本机操作能力的智能助理。你可以通过终端命令和文件管理工具来了解环境并执行任务。始终保持回复简洁、专业。${skillContext}`,
     model: {
       id: ARK_CONFIG.model,
       name: "Volcengine Ark",

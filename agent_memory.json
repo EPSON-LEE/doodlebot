@@ -84,5 +84,795 @@
     },
     "stopReason": "stop",
     "timestamp": 1770801943676
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "列举一下当前的文件结构"
+      }
+    ],
+    "timestamp": 1770802032090
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想了解当前的文件结构。我可以使用 manage_files 工具来列出当前目录的内容。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "toolCall",
+        "id": "manage_files:0",
+        "name": "manage_files",
+        "arguments": {
+          "action": "list",
+          "path": "."
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 172,
+      "output": 57,
+      "cacheRead": 256,
+      "cacheWrite": 0,
+      "totalTokens": 485,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770802032090
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "manage_files:0",
+    "toolName": "manage_files",
+    "content": [
+      {
+        "type": "text",
+        "text": ".env\n.env.example\n.git\n.gitignore\nagent_memory.json\nindex.ts\nnode_modules\npackage-lock.json\npackage.json\nsrc\ntsconfig.json"
+      }
+    ],
+    "details": {
+      "files": [
+        ".env",
+        ".env.example",
+        ".git",
+        ".gitignore",
+        "agent_memory.json",
+        "index.ts",
+        "node_modules",
+        "package-lock.json",
+        "package.json",
+        "src",
+        "tsconfig.json"
+      ]
+    },
+    "isError": false,
+    "timestamp": 1770802034326
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "当前目录的文件结构如下：\n\n```\n.\n├── .env                  # 环境变量配置文件\n├── .env.example          # 环境变量示例文件\n├── .git/                 # Git 版本控制目录\n├── .gitignore            # Git 忽略文件配置\n├── agent_memory.json     # 代理记忆/状态文件\n├── index.ts              # 入口文件 (TypeScript)\n├── node_modules/         # Node.js 依赖包目录\n├── package-lock.json     # 依赖包锁定文件\n├── package.json          # 项目配置和依赖信息\n├── src/                  # 源代码目录\n└── tsconfig.json         # TypeScript 配置文件\n```\n\n这是一个 Node.js + TypeScript 项目。需要我查看某个具体文件的内容或 `src` 目录的结构吗？",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "当前目录的文件结构如下：\n\n```\n.\n├── .env                  # 环境变量配置文件\n├── .env.example          # 环境变量示例文件\n├── .git/                 # Git 版本控制目录\n├── .gitignore            # Git 忽略文件配置\n├── agent_memory.json     # 代理记忆/状态文件\n├── index.ts              # 入口文件 (TypeScript)\n├── node_modules/         # Node.js 依赖包目录\n├── package-lock.json     # 依赖包锁定文件\n├── package.json          # 项目配置和依赖信息\n├── src/                  # 源代码目录\n└── tsconfig.json         # TypeScript 配置文件\n```\n\n这是一个 Node.js + TypeScript 项目。需要我查看某个具体文件的内容或 `src` 目录的结构吗？"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 240,
+      "output": 491,
+      "cacheRead": 256,
+      "cacheWrite": 0,
+      "totalTokens": 987,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802034326
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "半径为 5 的圆面积是多少"
+      }
+    ],
+    "timestamp": 1770802311127
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想要计算半径为5的圆面积。我可以使用calculate_area函数来计算。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "toolCall",
+        "id": "calculate_area:1",
+        "name": "calculate_area",
+        "arguments": {
+          "shape": "circle",
+          "radius": 5
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 676,
+      "output": 58,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 734,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770802311129
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "calculate_area:1",
+    "toolName": "calculate_area",
+    "content": [
+      {
+        "type": "text",
+        "text": "计算结果为 78.54"
+      }
+    ],
+    "details": {
+      "area": "78.54"
+    },
+    "isError": false,
+    "timestamp": 1770802313358
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "半径为 5 的圆面积是 **78.54**（单位：平方单位）。这是按照 π ≈ 3.1416 计算得出的。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "半径为 5 的圆面积是 **78.54**（单位：平方单位）。"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 206,
+      "output": 90,
+      "cacheRead": 512,
+      "cacheWrite": 0,
+      "totalTokens": 808,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802313358
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "帮我打开 chrome"
+      }
+    ],
+    "timestamp": 1770802528160
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想要打开 Chrome 浏览器。我需要使用 shell 命令来执行这个操作。\n\n在 macOS 上，可以使用 `open -a \"Google Chrome\"` 命令。\n在 Linux 上，可以使用 `google-chrome` 或 `chromium` 命令。\n在 Windows 上，可以使用 `start chrome` 命令。\n\n由于我不知道当前的操作系统，我可以尝试一个通用的方法。最常见的是 macOS 和 Linux 系统。让我先尝试 `open` 命令（macOS），如果失败的话，可以尝试 `google-chrome`（Linux）。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "toolCall",
+        "id": "execute_command:2",
+        "name": "execute_command",
+        "arguments": {
+          "command": "open -a \"Google Chrome\" 2>/dev/null || google-chrome 2>/dev/null || chromium 2>/dev/null || echo \"无法找到 Chrome 浏览器，请手动打开\""
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 749,
+      "output": 287,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 1036,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770802528161
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "execute_command:2",
+    "toolName": "execute_command",
+    "content": [
+      {
+        "type": "text",
+        "text": "(无输出)"
+      }
+    ],
+    "details": {
+      "output": "(无输出)"
+    },
+    "isError": false,
+    "timestamp": 1770802535930
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "看起来命令执行了但没有输出，这通常意味着 Chrome 已成功启动。让我确认一下这个命令的状态。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "Chrome 浏览器应该已经打开了。如果未成功打开，可能是浏览器不在系统默认路径中。你可以：\n\n- **macOS**: 在 Spotlight (Cmd+Space) 中输入 \"Chrome\" 打开\n- **Windows**: 在搜索栏输入 \"Chrome\" 打开\n- **Linux**: 在终端运行 `google-chrome` 或 `chromium`"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 313,
+      "output": 124,
+      "cacheRead": 512,
+      "cacheWrite": 0,
+      "totalTokens": 949,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802535930
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "你可以帮我打开 小红书吗"
+      }
+    ],
+    "timestamp": 1770802667297
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想让我打开小红书。小红书是一个应用程序/网站。我可以尝试通过浏览器打开小红书的网站，或者如果系统有安装小红书应用的话尝试打开。\n\n让我尝试用浏览器打开小红书网站。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "我可以帮你打开小红书的网页版："
+      },
+      {
+        "type": "toolCall",
+        "id": "execute_command:3",
+        "name": "execute_command",
+        "arguments": {
+          "command": "open \"https://www.xiaohongshu.com\" 2>/dev/null || google-chrome \"https://www.xiaohongshu.com\" 2>/dev/null || echo \"请手动访问 https://www.xiaohongshu.com\""
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 661,
+      "output": 157,
+      "cacheRead": 256,
+      "cacheWrite": 0,
+      "totalTokens": 1074,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770802667298
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "execute_command:3",
+    "toolName": "execute_command",
+    "content": [
+      {
+        "type": "text",
+        "text": "(无输出)"
+      }
+    ],
+    "details": {
+      "output": "(无输出)"
+    },
+    "isError": false,
+    "timestamp": 1770802673303
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "已执行命令打开小红书网页版。小红书已在你浏览器中打开（或请检查浏览器）。\n\n**注意**：我打开的是小红书的**网页版**。如果你需要使用完整功能的手机 App 版本，请在手机上直接打开小红书 App。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "小红书网页版已在你浏览器中打开（或请检查浏览器）。\n\n**注意**：我打开的是小红书的**网页版**。如果你需要使用完整功能的手机 App 版本，请在手机上直接打开小红书 App。"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 245,
+      "output": 140,
+      "cacheRead": 768,
+      "cacheWrite": 0,
+      "totalTokens": 1153,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802673303
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "帮我在小红书检索 西安天气"
+      }
+    ],
+    "timestamp": 1770802696443
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想让我在小红书检索\"西安天气\"。但是，我目前的能力是通过系统命令和工具操作本机环境，比如：\n\n1. 执行 shell 命令\n2. 读取/列出文件\n3. 计算面积等\n\n但是，我**无法直接操控浏览器**进行搜索或操作网页内容。我只能：\n- 打开浏览器（通过系统命令）\n- 打开特定 URL（通过系统命令）\n\n我无法：\n- 在小红书网站输入搜索词\n- 点击搜索按钮\n- 读取搜索结果\n\n我应该诚实地告诉用户我无法完成这个任务，或者提供替代方案（比如帮用户打开带有搜索关键词的小红书搜索 URL，如果我知道小红书搜索 URL 的格式的话）。\n\n小红书的搜索 URL 格式通常是：\nhttps://www.xiaohongshu.com/search_result?keyword=关键词\n\n让我尝试帮用户打开这个 URL。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "我可以帮你打开小红书的搜索页面，但我无法直接在小红书网页中执行搜索操作（无法模拟键盘输入和点击）。不过，我可以帮你打开带有搜索关键词的链接："
+      },
+      {
+        "type": "toolCall",
+        "id": "execute_command:4",
+        "name": "execute_command",
+        "arguments": {
+          "command": "open \"https://www.xiaohongshu.com/search_result?keyword=西安天气\" 2>/dev/null || google-chrome \"https://www.xiaohongshu.com/search_result?keyword=西安天气\" 2>/dev/null || echo \"请手动访问 https://www.xiaohongshu.com/search_result?keyword=西安天气\""
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 302,
+      "output": 490,
+      "cacheRead": 768,
+      "cacheWrite": 0,
+      "totalTokens": 1560,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770802696444
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "execute_command:4",
+    "toolName": "execute_command",
+    "content": [
+      {
+        "type": "text",
+        "text": "(无输出)"
+      }
+    ],
+    "details": {
+      "output": "(无输出)"
+    },
+    "isError": false,
+    "timestamp": 1770802714249
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "我已经尝试打开小红书的搜索结果页面，搜索关键词是\"西安天气\"。\n\n用户需要注意的是，这种通过 URL 参数传递关键词的方式是否能在小红书网页版上正常工作，取决于小红书网页版的具体实现。有些网站的搜索功能需要 JavaScript 执行，或者需要特定的表单提交，而不仅仅是 URL 参数。\n\n我应该告知用户这一点，并提供备选方案。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "小红书搜索页面已尝试打开。不过需要注意：**小红书网页版可能不完全支持通过链接直接搜索**，你可能需要：\n\n1. **如果页面已显示搜索结果** — 直接查看即可\n2. **如果页面未显示结果** — 手动在搜索框中输入\"西安天气\"后搜索\n\n**更快捷的替代方案**：\n- 直接查看天气：我可以用浏览器打开西安天气的权威预报页面\n- 手机小红书 App：在 App 内搜索体验更好\n\n需要我帮你打开其他天气网站查看西安天气吗？"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 961,
+      "output": 262,
+      "cacheRead": 256,
+      "cacheWrite": 0,
+      "totalTokens": 1479,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802714249
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "帮我查一下西安明天天气"
+      }
+    ],
+    "timestamp": 1770802741095
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想要查询西安明天的天气。我需要打开一个天气网站来查询西安的天气预报。我可以使用命令打开一个天气网站，比如中国天气网或者搜索引擎搜索\"西安明天天气\"。\n\n我选择打开中国天气网的西安天气页面，这是一个权威的天气预报网站。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "我来帮你打开西安的天气预报页面："
+      },
+      {
+        "type": "toolCall",
+        "id": "execute_command:5",
+        "name": "execute_command",
+        "arguments": {
+          "command": "open \"https://weather.com/zh-CN/weather/today/l/CHXX0141:1:CH\" 2>/dev/null || open \"https://tianqi.baidu.com/xian\" 2>/dev/null || google-chrome \"https://tianqi.baidu.com/xian\" 2>/dev/null || echo \"请手动搜索'西安天气'查看\""
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 321,
+      "output": 211,
+      "cacheRead": 1024,
+      "cacheWrite": 0,
+      "totalTokens": 1556,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770802741095
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "execute_command:5",
+    "toolName": "execute_command",
+    "content": [
+      {
+        "type": "text",
+        "text": "(无输出)"
+      }
+    ],
+    "details": {
+      "output": "(无输出)"
+    },
+    "isError": false,
+    "timestamp": 1770802748230
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "西安天气页面应该已经打开了。\n\n不过，我作为AI助手，目前无法直接获取实时天气数据，因为我没有实时联网查询天气数据的工具。我只能帮你打开天气网站。\n\n如果你想让我用其他方式帮你，比如：\n1. 打开其他天气网站（如中国天气网、和风天气等）\n2. 查看本地是否有天气相关的文件\n\n或者你可以直接告诉我，你看到了什么天气信息，我可以帮你解读。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "西安天气页面已尝试打开，请查看浏览器。\n\n⚠️ **说明**：我无法直接获取实时天气数据，只能帮你打开天气网站。如果你需要准确的明天天气预报，建议：\n\n1. **查看刚打开的天气网站**\n2. **手机天气 App**（通常最准确）\n3. **拨打 12121** 气象服务热线\n\n需要我帮你打开其他天气网站（如中国天气网）作为对比参考吗？"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 186,
+      "output": 267,
+      "cacheRead": 1280,
+      "cacheWrite": 0,
+      "totalTokens": 1733,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802748235
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "可以告诉我明天天气怎么样吗"
+      }
+    ],
+    "timestamp": 1770802771474
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户询问明天天气，但我作为AI无法直接获取实时天气数据。我没有访问实时天气API的工具，也无法浏览互联网获取最新信息。我应该诚实地告诉用户我无法提供实时天气信息，并建议他查看我刚刚帮他打开的天气网站或使用手机天气App。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "抱歉，我无法直接获取实时天气数据。作为AI，我没有接入实时天气系统的能力。\n\n**你可以通过以下方式查看明天天气：**\n\n1. **查看刚才打开的浏览器页面** - 我已帮你打开了西安天气网站\n2. **手机天气 App** - 通常最准确便捷\n3. **搜索引擎** - 直接搜索\"西安明天天气\"\n\n如果你需要我帮你打开其他天气网站作为参考，我可以继续协助。"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 289,
+      "output": 200,
+      "cacheRead": 1280,
+      "cacheWrite": 0,
+      "totalTokens": 1769,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770802771474
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "你有哪些技能"
+      }
+    ],
+    "timestamp": 1770803094508
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户询问我的技能，我需要根据系统提供的工具和自身能力来回答。我有的工具包括：\n1. calculate_area - 计算圆或矩形面积\n2. execute_command - 执行shell命令\n3. manage_files - 列出目录或读取文件内容\n\n我应该清晰地列出这些能力，同时说明我的限制（如无法获取实时数据、无法操作物理设备等）。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "我具备以下技能：\n\n## 🖥️ **系统操作**\n- **执行终端命令** - 运行 shell 命令（如 `ls`、`pwd`、`open` 等）\n- **文件管理** - 读取文件内容、列出目录结构\n\n## 🧮 **计算工具**\n- **几何计算** - 计算圆形、矩形的面积\n\n## 🌐 **网页操作**\n- **打开网页** - 通过浏览器打开指定 URL\n- **搜索辅助** - 生成搜索链接（需用户手动确认结果）\n\n## ❌ **我的限制**\n- **无法获取实时数据** - 不能查实时天气、股价、新闻等\n- **无法操作物理设备** - 不能控制家电、摄像头等\n- **无法模拟用户操作** - 不能在网页中自动填写表单或点击按钮\n- **禁止破坏性操作** - 不能执行删除系统文件等危险命令\n\n需要我帮你做什么？"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 646,
+      "output": 352,
+      "cacheRead": 1024,
+      "cacheWrite": 0,
+      "totalTokens": 2022,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770803094511
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "帮我查一下这篇网页的内容：https://example.com"
+      }
+    ],
+    "timestamp": 1770803397954
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "用户想让我抓取网页 https://example.com 的内容。我可以使用 web_scraper 工具来完成这个任务。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "我来帮你抓取这个网页的内容："
+      },
+      {
+        "type": "toolCall",
+        "id": "web_scraper:6",
+        "name": "web_scraper",
+        "arguments": {
+          "url": "https://example.com",
+          "waitMillis": 2000
+        }
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 1855,
+      "output": 80,
+      "cacheRead": 256,
+      "cacheWrite": 0,
+      "totalTokens": 2191,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "toolUse",
+    "timestamp": 1770803397956
+  },
+  {
+    "role": "toolResult",
+    "toolCallId": "web_scraper:6",
+    "toolName": "web_scraper",
+    "content": [
+      {
+        "type": "text",
+        "text": "标题: Example Domain\n\n内容概要:\nExample DomainThis domain is for use in documentation examples without needing permission. Avoid use in operations.Learn more"
+      }
+    ],
+    "details": {
+      "url": "https://example.com",
+      "success": true
+    },
+    "isError": false,
+    "timestamp": 1770803407144
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "网页内容已成功抓取。这是一个示例域名页面，内容很简单。我需要向用户汇报抓取结果。",
+        "thinkingSignature": "reasoning_content"
+      },
+      {
+        "type": "text",
+        "text": "已抓取到网页内容：\n\n---\n\n## 📄 Example Domain\n\n**内容：**\n> This domain is for use in documentation examples without needing permission. Avoid use in operations.\n> \n> [Learn more]\n\n---\n\n这是一个 **ICANN 的示例域名**（example.com），专门用于文档中的示例展示，不涉及实际业务内容。\n\n需要我帮你抓取其他网页吗？"
+      }
+    ],
+    "api": "openai-completions",
+    "provider": "openai",
+    "model": "kimi-k2.5",
+    "usage": {
+      "input": 142,
+      "output": 118,
+      "cacheRead": 2048,
+      "cacheWrite": 0,
+      "totalTokens": 2308,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "stopReason": "stop",
+    "timestamp": 1770803407145
   }
 ]
