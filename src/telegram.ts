@@ -9,7 +9,15 @@ if (!ARK_CONFIG.telegramToken) {
   process.exit(1);
 }
 
-const bot = new Telegraf(ARK_CONFIG.telegramToken);
+const bot = new Telegraf(ARK_CONFIG.telegramToken, {
+  handlerTimeout: 300_000 // 增加处理超时到 5 分钟，防止复杂网页抓取超时
+});
+
+// 全局错误捕获，防止 Promise 未处理异常导致进程崩溃
+bot.catch((err, ctx) => {
+  console.error(`Telegram 运行错误 (${ctx.update.update_id}):`, err);
+  ctx.reply("抱歉，处理您的请求时发生了严重的系统错误或超时。").catch(() => {});
+});
 
 /**
  * 设置专门针对 Telegram 的事件订阅
@@ -30,6 +38,13 @@ function setupTelegramSubscriptions(chatId: number) {
         break;
 
       case "tool_execution_end":
+        // 如果工具结果包含截图路径，发送图片到 Telegram
+        if (event.result.details && (event.result.details as any).screenshotPath) {
+          const photoPath = (event.result.details as any).screenshotPath;
+          bot.telegram.sendPhoto(chatId, { source: photoPath }, { caption: `网页截图: ${event.toolName}` }).catch(err => {
+            console.error("发送截图失败:", err);
+          });
+        }
         // 如果工具报错，给予反馈
         if (event.result.isError) {
           bot.telegram.sendMessage(chatId, `[工具报错]: ${event.toolName}`).catch(() => {});

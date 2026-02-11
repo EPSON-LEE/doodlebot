@@ -16,7 +16,7 @@ const skillContext = availableSkills.length > 0
 // 1. 初始化 Agent
 export const agent = new Agent({
   initialState: {
-    systemPrompt: `你是一个具备本机操作能力的智能助理。你可以通过终端命令和文件管理工具来了解环境并执行任务。始终保持回复简洁、专业。${skillContext}`,
+    systemPrompt: `你是一个具备强大本机操作和联网调研能力的智能助理。你可以通过终端命令、文件管理工具以及网页抓取工具（含截图功能）来执行任务。对于复杂任务，你可以查阅已安装的技能（Skills）说明书。始终保持回复简洁、专业。${skillContext}`,
     model: {
       id: ARK_CONFIG.model,
       name: "Volcengine Ark",
