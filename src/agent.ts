@@ -1,0 +1,89 @@
+import { Agent } from "@mariozechner/pi-agent-core";
+import { type AgentEvent } from "@mariozechner/pi-agent-core";
+import { ARK_CONFIG } from "./config.js";
+import { agentTools } from "./tools/index.js";
+import { Colors } from "./constants/colors.js";
+import { logger } from "./utils/logger.js";
+import { memoryManager } from "./utils/memory.js";
+
+// 1. 初始化 Agent
+export const agent = new Agent({
+  initialState: {
+    systemPrompt: "你是一个具备本机操作能力的智能助理。你可以通过终端命令和文件管理工具来了解环境并执行任务。始终保持回复简洁、专业。",
+    model: {
+      id: ARK_CONFIG.model,
+      name: "Volcengine Ark",
+      api: "openai-completions",
+      provider: "openai",
+      baseUrl: ARK_CONFIG.baseUrl,
+      reasoning: false,
+      input: ["text"],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 128000,
+      maxTokens: 4096,
+    } as any,
+    tools: agentTools
+  },
+  getApiKey: (p) => (p === "openai" ? ARK_CONFIG.apiKey : undefined)
+});
+
+let hasStreamed = false;
+
+// 2. 核心事件引擎
+export function setupAgentSubscriptions() {
+  agent.subscribe((event: AgentEvent) => {
+    switch (event.type) {
+      case "turn_start":
+        hasStreamed = false;
+        break;
+
+      case "message_start":
+        if (event.message.role === "assistant") {
+          process.stdout.write(`${Colors.dim}AI 正在思考...${Colors.reset}\r`);
+        }
+        break;
+
+      case "message_update":
+        if (event.assistantMessageEvent.type === "text_delta") {
+          if (event.assistantMessageEvent.delta) {
+            if (!hasStreamed) {
+              process.stdout.write(" ".repeat(20) + "\r");
+            }
+            hasStreamed = true;
+            logger.agent(event.assistantMessageEvent.delta);
+          }
+        }
+        break;
+        
+      case "tool_execution_start":
+        hasStreamed = true;
+        logger.tool(event.toolName, event.args);
+        break;
+        
+      case "tool_execution_end":
+        logger.result(event.toolName, event.result);
+        break;
+        
+      case "turn_end":
+        if (event.message.role === "assistant" && !hasStreamed) {
+          const fullContent = event.message.content;
+          let text = "";
+          if (Array.isArray(fullContent)) {
+            const textNode = fullContent.find(c => (c as any).type === "text") as any;
+            text = textNode?.text || "";
+          } else if (typeof fullContent === "string") {
+            text = fullContent;
+          }
+          
+          if (text) {
+            logger.agent(text);
+          } else {
+            logger.error("Agent 运行完成，但未返回任何内容或工具调用。");
+          }
+        }
+        process.stdout.write("\n"); 
+        memoryManager.save(agent.state.messages);
+        break;
+    }
+  });
+}
