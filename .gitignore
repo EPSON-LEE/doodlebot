@@ -9,3 +9,4 @@ dist/
 .gemini/
 agent_memory.json
 screenshots/
+logs/

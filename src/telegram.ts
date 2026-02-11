@@ -3,6 +3,7 @@ import { agent } from "./agent.js";
 import { type AgentEvent } from "@mariozechner/pi-agent-core";
 import { ARK_CONFIG } from "./config.js";
 import { memoryManager } from "./utils/memory.js";
+import { PROMPTS } from "./constants/prompts.js";
 
 if (!ARK_CONFIG.telegramToken) {
   console.error("未发现 TELEGRAM_BOT_TOKEN，请在 .env 文件中设置。");
@@ -97,7 +98,7 @@ async function main() {
     }
 
     if (input.toLowerCase() === "/start") {
-      return ctx.reply("你好！我是你的通用 Agent AI。你可以直接发送指令给我，比如 '查看当前目录内容'。使用 /clear 重置记忆。");
+      return ctx.reply(PROMPTS.TELEGRAM_GREETING);
     }
 
     // 为当前对话设置订阅
