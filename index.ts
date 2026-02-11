@@ -1,20 +1,45 @@
 import { Agent } from "@mariozechner/pi-agent-core";
 import { type AgentTool, type AgentEvent } from "@mariozechner/pi-agent-core";
-import { Type, getModel } from "@mariozechner/pi-ai";
+import { Type } from "@mariozechner/pi-ai";
 import * as dotenv from "dotenv";
-
-dotenv.config();
-
 import { exec } from "child_process";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { promisify } from "util";
+import * as readline from "readline";
+
+dotenv.config();
 
 const execAsync = promisify(exec);
 
-// 1. 定义多功能工具集
-const tools: AgentTool<any>[] = [
-  // --- 面积计算器 (保留作为参考) ---
+/**
+ * 终端颜色辅助工具
+ */
+const Colors = {
+  reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  dim: "\x1b[2m",
+  cyan: "\x1b[36m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  magenta: "\x1b[35m",
+  red: "\x1b[31m",
+  blue: "\x1b[34m",
+};
+
+/**
+ * 格式化打印工具
+ */
+const logger = {
+  info: (msg: string) => console.log(`${Colors.cyan}${msg}${Colors.reset}`),
+  tool: (name: string, args: any) => console.log(`\n${Colors.magenta}🔧 [执行工具: ${name}]${Colors.reset} 参数: ${JSON.stringify(args)}`),
+  result: (name: string, res: any) => console.log(`${Colors.green}✅ [工具结果: ${name}]${Colors.reset}`),
+  error: (msg: string) => console.error(`${Colors.red}❌ ${msg}${Colors.reset}`),
+  agent: (msg: string) => process.stdout.write(`${Colors.blue}${msg}${Colors.reset}`),
+};
+
+// 1. 定义 Agent 的工具集 (能力集)
+const agentTools: AgentTool<any>[] = [
   {
     name: "calculate_area",
     label: "面积计算器",
@@ -23,149 +48,193 @@ const tools: AgentTool<any>[] = [
       Type.Object({ shape: Type.Literal("circle"), radius: Type.Number() }),
       Type.Object({ shape: Type.Literal("rectangle"), width: Type.Number(), height: Type.Number() })
     ]),
-    execute: async (toolCallId, params) => {
+    execute: async (id, params) => {
       const area = params.shape === "circle" ? Math.PI * params.radius ** 2 : params.width * params.height;
-      const result = area.toFixed(2);
+      const res = area.toFixed(2);
       return { 
-        content: [{ type: "text", text: `面积计算结果: ${result}` }],
-        details: { area: result }
+        content: [{ type: "text", text: `计算结果为 ${res}` }],
+        details: { area: res }
       };
     }
   },
-
-  // --- Shell 命令执行器 ---
   {
     name: "execute_command",
     label: "终端命令",
-    description: "在本地终端执行 shell 命令。只能在当前工作目录下执行命令，禁止破坏性操作。",
+    description: "执行 shell 命令。例如 'ls', 'pwd'。禁止破坏性操作。",
     parameters: Type.Object({
-      command: Type.String({ description: "要执行的 shell 命令，例如 'ls', 'pwd', 'node -v'" })
+      command: Type.String({ description: "shell 命令" })
     }),
-    execute: async (toolCallId, params) => {
-      console.log(`\n[执行系统命令]: ${params.command}`);
+    execute: async (id, params) => {
       try {
         const { stdout, stderr } = await execAsync(params.command, { timeout: 10000 });
-        const output = stdout || stderr || "命令已执行，无输出内容。";
+        const output = stdout || stderr || "(无输出)";
         return { 
           content: [{ type: "text", text: output.slice(0, 2000) }],
-          details: { success: true, output }
+          details: { output }
         };
-      } catch (error: any) {
+      } catch (e: any) {
         return { 
-          content: [{ type: "text", text: `执行失败: ${error.message}` }],
-          details: { success: false, error: error.message },
+          content: [{ type: "text", text: `报错: ${e.message}` }],
+          details: { error: e.message },
           isError: true 
         };
       }
     }
   },
-
-  // --- 文件管理器 ---
   {
     name: "manage_files",
     label: "文件管理器",
-    description: "读取文件内容或列出目录文件",
+    description: "列出目录或读取文件内容",
     parameters: Type.Union([
-      Type.Object({ action: Type.Literal("read"), path: Type.String({ description: "相对路径" }) }),
-      Type.Object({ action: Type.Literal("list"), path: Type.String({ description: "目录路径，默认为 '.'" }) })
+      Type.Object({ action: Type.Literal("read"), path: Type.String() }),
+      Type.Object({ action: Type.Literal("list"), path: Type.String({ default: "." }) })
     ]),
-    execute: async (toolCallId, params) => {
-      const targetPath = path.resolve(process.cwd(), params.path || ".");
+    execute: async (id, params) => {
+      const target = path.resolve(process.cwd(), params.path || ".");
       try {
         if (params.action === "list") {
-          const files = await fs.readdir(targetPath);
-          return { 
-            content: [{ type: "text", text: `目录清单:\n${files.join("\n")}` }],
-            details: { action: "list", files }
-          };
+          const files = await fs.readdir(target);
+          return { content: [{ type: "text", text: files.join("\n") }], details: { files } };
         } else {
-          const content = await fs.readFile(targetPath, "utf-8");
-          return { 
-            content: [{ type: "text", text: `文件内容 (${params.path}):\n\n${content.slice(0, 2000)}` }],
-            details: { action: "read", path: params.path }
-          };
+          const content = await fs.readFile(target, "utf-8");
+          return { content: [{ type: "text", text: content.slice(0, 3000) }], details: { path: params.path } };
         }
-      } catch (error: any) {
-        return { 
-          content: [{ type: "text", text: `操作失败: ${error.message}` }],
-          details: { success: false, error: error.message },
-          isError: true 
-        };
+      } catch (e: any) {
+        return { content: [{ type: "text", text: `错误: ${e.message}` }], details: { error: e.message }, isError: true };
       }
     }
   }
 ];
 
-// 2. 模型设置
-// 由于火山方舟是自定义模型，我们手动定义 Model 对象
-const model: any = {
-  id: process.env.ARK_MODEL_NAME || "doubao-seed-code",
-  name: "Volcengine Ark",
-  api: "openai-completions", // 使用标准 Chat Completions API
-  provider: "openai",
+// 2. 环境验证
+const ARK_CONFIG = {
+  apiKey: process.env.ARK_API_KEY,
   baseUrl: process.env.ARK_BASE_URL || "https://ark.cn-beijing.volces.com/api/coding/v3",
-  reasoning: false,
-  input: ["text"],
-  cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  contextWindow: 128000,
-  maxTokens: 4096,
+  model: process.env.ARK_MODEL_NAME || "doubao-seed-code",
 };
 
 // 3. 初始化 Agent
 const agent = new Agent({
   initialState: {
-    systemPrompt: "你是一个拥有本机操作权限的通用 Agent AI。你可以计算面积、执行终端命令（仅限查看和非破坏性命令）以及查阅本地文件。请根据用户的需求灵活使用工具。你可以先通过 ls 列出文件，再通过读取文件内容来回答问题。如果你需要运行多条命令，请逐步执行。",
-    model: model,
-    tools: tools
+    systemPrompt: "你是一个具备本机操作能力的智能助理。你可以通过终端命令和文件管理工具来了解环境并执行任务。始终保持回复简洁、专业。",
+    model: {
+      id: ARK_CONFIG.model,
+      name: "Volcengine Ark",
+      api: "openai-completions",
+      provider: "openai",
+      baseUrl: ARK_CONFIG.baseUrl,
+      reasoning: false,
+      input: ["text"],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 128000,
+      maxTokens: 4096,
+    } as any,
+    tools: agentTools
   },
-  // 提供 API Key 处理逻辑
-  getApiKey: (provider) => {
-    if (provider === "openai" || provider === model.provider) {
-      return process.env.ARK_API_KEY;
-    }
-    return undefined;
-  }
+  getApiKey: (p) => (p === "openai" ? ARK_CONFIG.apiKey : undefined)
 });
 
-// 4. 订阅事件以查看执行流程
+let hasStreamed = false;
+
+// 4. 事件订阅 (增加调试日志)
 agent.subscribe((event: AgentEvent) => {
+  // 调试日志：查看所有到达的事件
+  // console.log(`[DEBUG] 收到事件: ${event.type}`);
+
   switch (event.type) {
+    case "turn_start":
+      hasStreamed = false;
+      break;
+
+    case "message_start":
+      if (event.message.role === "assistant") {
+        process.stdout.write(`${Colors.dim}AI 正在思考...${Colors.reset}\r`);
+      }
+      break;
+
     case "message_update":
-        // 处理消息更新（流式输出）
-        break;
+      if (event.assistantMessageEvent.type === "text_delta") {
+        if (event.assistantMessageEvent.delta) {
+          if (!hasStreamed) {
+            // 第一次收到 delta 时，清除“正在思考”
+            process.stdout.write(" ".repeat(20) + "\r");
+          }
+          hasStreamed = true;
+          logger.agent(event.assistantMessageEvent.delta);
+        }
+      }
+      break;
+      
     case "tool_execution_start":
-        console.log(`\n[执行工具] ${event.toolName}，参数为:`, event.args);
-        break;
+      hasStreamed = true; // 工具执行也被视为有了进展
+      logger.tool(event.toolName, event.args);
+      break;
+      
     case "tool_execution_end":
-        console.log(`[工具结果] ${event.toolName}:`, event.result);
-        break;
-        case "turn_end":
-            console.log("\n--- Agent 回复 ---");
-            const lastMessage = event.message;
-            if (Array.isArray(lastMessage.content)) {
-                const textContent = lastMessage.content.find(c => c.type === "text");
-                if (textContent && textContent.type === "text") {
-                    console.log(textContent.text);
-                }
-            } else if (typeof lastMessage.content === "string") {
-                console.log(lastMessage.content);
-            }
-            break;
+      logger.result(event.toolName, event.result);
+      break;
+      
+    case "turn_end":
+      // 兜底显示
+      if (event.message.role === "assistant" && !hasStreamed) {
+        const fullContent = event.message.content;
+        let text = "";
+        if (Array.isArray(fullContent)) {
+          const textNode = fullContent.find(c => (c as any).type === "text") as any;
+          text = textNode?.text || "";
+        } else if (typeof fullContent === "string") {
+          text = fullContent;
+        }
+        
+        if (text) {
+          logger.agent(text);
+        } else {
+          // 如果依然没内容，打印一个提示
+          logger.error("Agent 运行完成，但未返回任何内容或工具调用。");
+        }
+      }
+      process.stdout.write("\n"); 
+      break;
   }
 });
 
-// 5. 运行 Prompt
-async function main() {
-    if (!process.env.ARK_API_KEY && !process.env.OPENAI_API_KEY) {
-        console.warn("警告：.env 文件中未设置 API Key。LLM 调用可能会失败。");
+// 5. 交互式界面
+async function runCli() {
+  if (!ARK_CONFIG.apiKey) {
+    logger.error("未发现 API Key，请检查 .env 文件。");
+    process.exit(1);
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: `\n${Colors.yellow}${Colors.bright}你 > ${Colors.reset}`
+  });
+
+  logger.info("=== 通用 Agent AI (优化版) 已就绪 ===");
+  logger.info("输入指令（例如：'清空控制台并告诉我当前目录有什么'）");
+
+  rl.prompt();
+
+    rl.on("line", async (line) => {
+    const input = line.trim();
+    if (["exit", "quit", "退出"].includes(input.toLowerCase())) {
+      console.log("挥挥手，不带走一片云彩～");
+      process.exit(0);
     }
-    
-    console.log("--- Agent Prompt: 统计当前目录下的文件及其大小 ---");
-    try {
-        await agent.prompt("列出当前目录下的所有文件，并告诉我 package.json 的内容。");
-    } catch (error) {
-        console.error("\nAgent 执行过程中出错:", error);
+
+    if (input) {
+      // 临时挂起提示符，避免流式输出乱序
+      rl.pause(); 
+      try {
+        await agent.prompt(input);
+      } catch (err: any) {
+        logger.error(`系统发生异常: ${err.message}`);
+      }
+      rl.resume();
     }
+    rl.prompt();
+  });
 }
 
-main().catch(console.error);
+runCli().catch((err) => logger.error(err.message));
