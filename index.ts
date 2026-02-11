@@ -4,6 +4,7 @@ import { Type } from "@mariozechner/pi-ai";
 import * as dotenv from "dotenv";
 import { exec } from "child_process";
 import * as fs from "fs/promises";
+import { writeFileSync, readFileSync, unlinkSync, existsSync } from "fs";
 import * as path from "path";
 import { promisify } from "util";
 import * as readline from "readline";
@@ -11,6 +12,7 @@ import * as readline from "readline";
 dotenv.config();
 
 const execAsync = promisify(exec);
+const MEMORY_FILE = path.resolve(process.cwd(), "agent_memory.json");
 
 /**
  * 终端颜色辅助工具
@@ -36,6 +38,38 @@ const logger = {
   result: (name: string, res: any) => console.log(`${Colors.green}✅ [工具结果: ${name}]${Colors.reset}`),
   error: (msg: string) => console.error(`${Colors.red}❌ ${msg}${Colors.reset}`),
   agent: (msg: string) => process.stdout.write(`${Colors.blue}${msg}${Colors.reset}`),
+};
+
+/**
+ * 记忆持久化工具
+ */
+const memoryManager = {
+  save(messages: any[]) {
+    try {
+      writeFileSync(MEMORY_FILE, JSON.stringify(messages, null, 2));
+    } catch (e: any) {
+      logger.error(`保存记忆失败: ${e.message}`);
+    }
+  },
+  load(): any[] {
+    try {
+      if (existsSync(MEMORY_FILE)) {
+        const data = readFileSync(MEMORY_FILE, "utf-8");
+        return JSON.parse(data);
+      }
+    } catch {}
+    return [];
+  },
+  clear() {
+    try {
+      if (existsSync(MEMORY_FILE)) {
+        unlinkSync(MEMORY_FILE);
+      }
+      logger.info("已清空持久化记忆。");
+    } catch {
+      logger.info("记忆文件不存在或已清空。");
+    }
+  }
 };
 
 // 1. 定义 Agent 的工具集 (能力集)
@@ -194,6 +228,8 @@ agent.subscribe((event: AgentEvent) => {
         }
       }
       process.stdout.write("\n"); 
+      // 每次 Turn 结束保存记忆
+      memoryManager.save(agent.state.messages);
       break;
   }
 });
@@ -211,13 +247,28 @@ async function runCli() {
     prompt: `\n${Colors.yellow}${Colors.bright}你 > ${Colors.reset}`
   });
 
+  // 0. 加载历史记忆
+  const history = await memoryManager.load();
+  if (history.length > 0) {
+    agent.replaceMessages(history);
+    logger.info(`已从记忆中恢复 ${history.length} 条消息。`);
+  }
+
   logger.info("=== 通用 Agent AI (优化版) 已就绪 ===");
-  logger.info("输入指令（例如：'清空控制台并告诉我当前目录有什么'）");
+  logger.info("输入指令（输入 'clear' 清空记忆，'exit' 退出）");
 
   rl.prompt();
 
     rl.on("line", async (line) => {
     const input = line.trim();
+    
+    if (input.toLowerCase() === "clear") {
+      await memoryManager.clear();
+      agent.replaceMessages([]);
+      rl.prompt();
+      return;
+    }
+
     if (["exit", "quit", "退出"].includes(input.toLowerCase())) {
       console.log("挥挥手，不带走一片云彩～");
       process.exit(0);
