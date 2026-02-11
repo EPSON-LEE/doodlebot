@@ -7,3 +7,5 @@ dist/
 .DS_Store
 .agent/
 .gemini/
+agent_memory.json
+screenshots/

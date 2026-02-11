@@ -46,7 +46,7 @@ export function setupAgentSubscriptions() {
 
       case "message_start":
         if (event.message.role === "assistant") {
-          process.stdout.write(`${Colors.dim}AI 正在思考...${Colors.reset}\r`);
+          process.stdout.write(`${Colors.dim}AI 正在思考...\r`);
         }
         break;
 

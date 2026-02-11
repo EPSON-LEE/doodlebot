@@ -34,7 +34,7 @@ function setupTelegramSubscriptions(chatId: number) {
         break;
 
       case "tool_execution_start":
-        bot.telegram.sendMessage(chatId, `[正在执行]: ${event.toolName}...`).catch(() => {});
+        bot.telegram.sendMessage(chatId, `[执行工具]: ${event.toolName}...`).catch(() => {});
         break;
 
       case "tool_execution_end":
@@ -93,7 +93,7 @@ async function main() {
     if (input.toLowerCase() === "/clear") {
       memoryManager.clear();
       agent.replaceMessages([]);
-      return ctx.reply("✨ 持久化记忆已清空。");
+      return ctx.reply("持久化记忆已清空。");
     }
 
     if (input.toLowerCase() === "/start") {

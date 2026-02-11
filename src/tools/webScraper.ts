@@ -53,7 +53,7 @@ export const webScraper: AgentTool<any> = {
         const fileName = `screenshot_${Date.now()}.png`;
         const filePath = path.join(screenshotDir, fileName);
         await page.screenshot({ path: filePath, fullPage: true });
-        screenshotInfo = `\n\n📸 截图已保存至: screenshots/${fileName}`;
+        screenshotInfo = `\n\n截图已保存至: screenshots/${fileName}`;
         (params as any).screenshotPath = filePath; // 传递给 details
       }
 
