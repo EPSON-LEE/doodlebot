@@ -7,6 +7,7 @@
     "dev": "tsx index.ts",
     "watch": "tsx watch index.ts",
     "telegram": "tsx src/telegram.ts",
+    "dingtalk": "tsx src/dingtalk.ts",
     "start": "tsx index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "logs": "tail -f logs/llm.log"
@@ -18,6 +19,7 @@
   "dependencies": {
     "@mariozechner/pi-agent-core": "^0.52.9",
     "@mariozechner/pi-ai": "^0.52.9",
+    "dingtalk-stream": "^2.1.4",
     "dotenv": "^17.2.4",
     "js-yaml": "^4.1.1",
     "playwright": "^1.58.2",

