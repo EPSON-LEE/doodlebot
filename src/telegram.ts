@@ -4,6 +4,7 @@ import { type AgentEvent } from "@mariozechner/pi-agent-core";
 import { ARK_CONFIG } from "./config.js";
 import { memoryManager } from "./utils/memory.js";
 import { PROMPTS } from "./constants/prompts.js";
+import { taskManager, type BackgroundTask } from "./core/taskManager.js";
 
 if (!ARK_CONFIG.telegramToken) {
   console.error("未发现 TELEGRAM_BOT_TOKEN，请在 .env 文件中设置。");
@@ -29,7 +30,7 @@ function setupTelegramSubscriptions(chatId: number) {
     switch (event.type) {
       case "message_start":
         if (event.message.role === "assistant") {
-           // Telegram 不支持流式空字符占位，显示一个“思考中”提示
+           // Telegram 不支持流式空字符占位，显示一个"思考中"提示
            bot.telegram.sendChatAction(chatId, "typing").catch(() => {});
         }
         break;
@@ -88,8 +89,33 @@ async function main() {
     console.log(`[Memory] 已从记忆中恢复 ${history.length} 条消息。`);
   }
 
+  // 跟踪 Agent 运行状态和活跃的 chatId
+  let isAgentRunning = false;
+  let activeChatId: number | null = null;
+
+  // ===== 后台任务完成通知 =====
+  taskManager.on("task:done", (task: BackgroundTask) => {
+    if (activeChatId) {
+      bot.telegram.sendMessage(
+        activeChatId,
+        `[后台任务完成] ${task.description}\nTaskID: ${task.id}\n退出码: ${task.exitCode}`
+      ).catch(() => {});
+    }
+  });
+
+  taskManager.on("task:error", (task: BackgroundTask) => {
+    if (activeChatId) {
+      const errPreview = task.stderr ? task.stderr.slice(-200) : "未知错误";
+      bot.telegram.sendMessage(
+        activeChatId,
+        `[后台任务失败] ${task.description}\nTaskID: ${task.id}\n错误: ${errPreview}`
+      ).catch(() => {});
+    }
+  });
+
   bot.on("text", async (ctx) => {
     const input = ctx.message.text.trim();
+    activeChatId = ctx.chat.id;
     
     if (input.toLowerCase() === "/clear") {
       memoryManager.clear();
@@ -101,14 +127,36 @@ async function main() {
       return ctx.reply(PROMPTS.TELEGRAM_GREETING);
     }
 
+    if (input.toLowerCase() === "/tasks") {
+      const tasks = taskManager.listTasks();
+      if (tasks.length === 0) {
+        return ctx.reply("当前没有后台任务。");
+      }
+      const summary = tasks.map(t => taskManager.formatTask(t)).join("\n\n");
+      return ctx.reply(`后台任务列表:\n\n${summary}`);
+    }
+
+    // ===== 核心改动：Agent 运行中，通过 steer 注入消息 =====
+    if (isAgentRunning) {
+      agent.steer({
+        role: "user",
+        content: input,
+        timestamp: Date.now(),
+      } as any);
+      ctx.reply("[已收到] 你的消息已排队，Agent 将在当前步骤完成后处理。").catch(() => {});
+      return;
+    }
+
     // 为当前对话设置订阅
     const unsubscribe = setupTelegramSubscriptions(ctx.chat.id);
     
+    isAgentRunning = true;
     try {
       await agent.prompt(input);
     } catch (err: any) {
       ctx.reply(`系统异常: ${err.message}`);
     } finally {
+      isAgentRunning = false;
       // 任务完成后取消订阅，防止内存泄漏和重复发送
       unsubscribe();
     }
@@ -123,3 +171,4 @@ async function main() {
 }
 
 main().catch(err => console.error("启动失败:", err));
+
